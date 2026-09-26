@@ -1,0 +1,17 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 36" width="640" height="36" aria-hidden="true">
+<defs>
+<linearGradient id="l" x1="0" x2="1"><stop offset="0" stop-color="#c79b45" stop-opacity="0"/><stop offset="1" stop-color="#c79b45"/></linearGradient>
+<linearGradient id="r" x1="0" x2="1"><stop offset="0" stop-color="#c79b45"/><stop offset="1" stop-color="#c79b45" stop-opacity="0"/></linearGradient>
+</defs>
+<rect x="24" y="17.4" width="226" height="1.2" fill="url(#l)"/>
+<rect x="390" y="17.4" width="226" height="1.2" fill="url(#r)"/>
+<path d="M0-1L.25-.25 1 0 .25.25 0 1-.25.25-1 0-.25-.25z" transform="translate(262 18) scale(5)" fill="#c79b45"/>
+<path d="M0-1L.25-.25 1 0 .25.25 0 1-.25.25-1 0-.25-.25z" transform="translate(378 18) scale(5)" fill="#c79b45"/>
+<g fill="#c79b45" stroke="#c79b45" stroke-width=".8">
+<g transform="translate(276 18)"><circle r="5" fill="none" stroke-opacity=".45"/><path d="M0-5A5 5 0 0 1 0 5 3 5 0 0 0 0-5Z" stroke="none"/></g>
+<g transform="translate(298 18)"><circle r="5" fill="none" stroke-opacity=".45"/><path d="M0-5A5 5 0 0 1 0 5Z" stroke="none"/></g>
+<circle cx="320" cy="18" r="7" stroke="none"/>
+<g transform="translate(342 18)"><circle r="5" fill="none" stroke-opacity=".45"/><path d="M0-5A5 5 0 0 0 0 5Z" stroke="none"/></g>
+<g transform="translate(364 18)"><circle r="5" fill="none" stroke-opacity=".45"/><path d="M0-5A5 5 0 0 0 0 5 3 5 0 0 1 0-5Z" stroke="none"/></g>
+</g>
+</svg>

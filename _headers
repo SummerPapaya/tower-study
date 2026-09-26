@@ -1,0 +1,13 @@
+# Cloudflare Pages response headers (copied into dist/ by build.sh)
+
+/*
+  X-Content-Type-Options: nosniff
+  Referrer-Policy: strict-origin-when-cross-origin
+
+# three.js lives in a versioned folder, so it can be cached for good
+/static/three-r160/*
+  Cache-Control: public, max-age=31536000, immutable
+
+# fonts are re-subset whenever the page text changes, so keep this short
+/static/fonts/*
+  Cache-Control: public, max-age=604800

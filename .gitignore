@@ -1,0 +1,6 @@
+dist/
+.DS_Store
+tools/.font-cache/
+reference/
+__pycache__/
+.claude/

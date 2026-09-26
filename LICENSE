@@ -1,0 +1,57 @@
+The Tower Study (塔楼书房) — Licensing
+Copyright (c) 2026 SummerPapaya (https://github.com/SummerPapaya)
+
+SPDX-License-Identifier: MIT AND PolyForm-Noncommercial-1.0.0
+
+This project is licensed in two parts.
+
+
+1. Source code: MIT License (full text in LICENSE-MIT)
+
+   The general-purpose program logic in tower-study.html and assets/make_hero.py:
+   rendering setup, camera and zoom controls, the interaction framework, the
+   season, weather and time-of-day systems, the WebAudio synthesiser, the
+   internationalisation mechanism, and the behaviour of the HUD; plus build.sh,
+   _headers and the scripts in tools/.
+
+   You may reuse these techniques in any project, commercial or not.
+
+
+2. The artwork: PolyForm Noncommercial License 1.0.0 (full text in LICENSE-POLYFORM-NC)
+
+   The Tower Study as a creative work: the design, modelling and arrangement of
+   the tower, its rooms, furniture, props and characters; its colours, procedural
+   textures and visual style; the visual design of the HUD; the written copy in
+   window.I18N; the melodies; the images in assets/ (hero.svg, divider.svg) and in
+   static/ (og-image.png, favicon.svg, favicon.ico, apple-touch-icon.png),
+   including the drawing data in assets/make_hero.py that produces them.
+
+   You may use, change and share the artwork for any noncommercial purpose.
+   Commercial use of the artwork needs a separate license from the copyright holder;
+   contact SummerPapaya on GitHub.
+
+   Where the two parts overlap, for example when code is copied in a way that
+   reproduces or adapts the tower, its rooms or their look, the PolyForm
+   Noncommercial License 1.0.0 applies.
+
+
+3. Not covered by either license
+
+   Third-party components are redistributed under their own licenses:
+   three.js r160 in static/three-r160/ (MIT, see static/three-r160/LICENSE), and
+   subsets of the fonts Cormorant Garamond, Noto Serif SC and ZCOOL XiaoWei in
+   static/fonts/ (SIL Open Font License 1.1, see the OFL-*.txt files there).
+
+   The moon floor lamp is a fan homage to the moon chair in Nintendo's Animal
+   Crossing. This project is not affiliated with or endorsed by Nintendo.
+
+
+—— 中文摘要 ——
+
+本项目分两部分授权：
+· 程序代码（通用逻辑）采用 MIT 许可，可以自由复用，包括商业用途。
+· 塔楼书房这件作品本身（设计、建模与布置、配色与画风、界面美术、文案、旋律、assets/ 和 static/ 里的图像）
+  采用 PolyForm Noncommercial 1.0.0，可以非商业地使用、修改和分享；商业使用需另行取得授权。
+· 两者重叠时（例如复制代码来重现这座塔楼或它的画风），按 PolyForm Noncommercial 1.0.0 处理。
+· three.js（MIT）和裁剪后的字体（SIL OFL 1.1）按各自的许可随项目再发布，许可文本分别在 static/three-r160/ 和 static/fonts/。
+以上摘要仅便于阅读，以英文条款和两份许可证全文为准。
