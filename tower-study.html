@@ -248,7 +248,7 @@ html[lang=en] .dock .row:not(.time){gap:10px}
       dock: '窗外的天气、季节与时间', outside: '窗外', weather: '天气', season: '季节', view: '视角',
       orbit: '书房', bed: '卧室', sit: '坐到桌前', zoom: '缩放', zoomIn: '放大', zoomOut: '缩小', play: '让时间流动', pause: '暂停时间', hourLabel: '一天中的时间',
       hours: ['子', '卯', '午', '酉', '子'], periods: ['深夜', '清晨', '上午', '正午', '午后', '黄昏', '夜晚', '深夜'],
-      loading: '正在搭建塔楼书房…', loadFail: '三维引擎没能加载出来，请检查网络后刷新页面。', noGL: '这台设备暂时无法开启 WebGL，三维房间显示不出来。',
+      loading: '正在搭建塔楼书房…', loadFail: '三维引擎没能加载出来，请检查网络后刷新页面。', glLost: '三维画面暂时中断了，正在等待恢复…', noGL: '这台设备暂时无法开启 WebGL，三维房间显示不出来。',
       w: { clear: '晴朗', cloudy: '多云', rain: '下雨', storm: '雷雨', snow: '飘雪' },
       wMsg: { clear: ['晴', '天晴了，阳光斜斜照进来'], cloudy: ['云', '云层慢慢聚拢过来'], rain: ['雨', '下雨了，玻璃上挂满雨珠'], storm: ['雷', '雷雨将至，点上灯吧'], snow: ['雪', '下雪了，窗沿积起一层白'] },
       s: { spring: '春', summer: '夏', autumn: '秋', winter: '冬' }, sFull: { spring: '春季', summer: '夏季', autumn: '秋季', winter: '冬季' },
@@ -268,7 +268,7 @@ html[lang=en] .dock .row:not(.time){gap:10px}
       dock: 'Weather, season and time outside', outside: 'Outside', weather: 'Weather', season: 'Season', view: 'View',
       orbit: 'Study', bed: 'Bedroom', sit: 'Sit at desk', zoom: 'Zoom', zoomIn: 'Zoom in', zoomOut: 'Zoom out', play: 'Let time flow', pause: 'Pause time', hourLabel: 'Time of day',
       hours: ['0:00', '6:00', '12:00', '18:00', '24:00'], periods: ['Late night', 'Dawn', 'Morning', 'Noon', 'Afternoon', 'Dusk', 'Evening', 'Late night'],
-      loading: 'Building the tower study…', loadFail: 'The 3D engine didn’t load. Check your connection and refresh the page.', noGL: 'WebGL isn’t available on this device, so the 3D room can’t be shown.',
+      loading: 'Building the tower study…', loadFail: 'The 3D engine didn’t load. Check your connection and refresh the page.', glLost: 'The 3D view was interrupted. Waiting for it to come back…', noGL: 'WebGL isn’t available on this device, so the 3D room can’t be shown.',
       w: { clear: 'Clear', cloudy: 'Cloudy', rain: 'Rain', storm: 'Storm', snow: 'Snow' },
       wMsg: { clear: ['☀︎', 'The sky clears and sunlight slants into the room'], cloudy: ['☁︎', 'Clouds slowly gather overhead'], rain: ['☂︎', 'Rain — beads of water cling to the glass'], storm: ['↯', 'A storm is rolling in. Better light the lamp'], snow: ['❄︎', 'Snow is falling and the sills turn white'] },
       s: { spring: 'Spring', summer: 'Summer', autumn: 'Autumn', winter: 'Winter' }, sFull: { spring: 'Spring', summer: 'Summer', autumn: 'Autumn', winter: 'Winter' },
@@ -358,7 +358,10 @@ const canvas = $('#c');
 let renderer;
 try { renderer = new THREE.WebGLRenderer({ canvas, antialias: false, powerPreference: 'high-performance' }); }
 catch (e) { failLoad('noGL'); throw e; }
-const DPR = Math.min(window.devicePixelRatio || 1, isSmall ? 1.5 : 1.75);
+const PX_BUDGET = 2e6;   /* drawing-buffer pixel budget for mobile WebViews */
+let dprCap = 1.5;
+const dprFor = (w, h) => Math.max(0.5, Math.min(window.devicePixelRatio || 1, dprCap, Math.sqrt(PX_BUDGET / Math.max(1, w * h))));
+let DPR = dprFor(innerWidth, innerHeight);
 renderer.setPixelRatio(DPR);
 renderer.setSize(innerWidth, innerHeight, false);
 renderer.shadowMap.enabled = true;
@@ -2890,6 +2893,7 @@ function checkSize() {
 }
 function resize() {
   const w = lastW || Math.max(1, innerWidth), h = lastH || Math.max(1, innerHeight);
+  DPR = dprFor(w, h); renderer.setPixelRatio(DPR);
   renderer.setSize(w, h, false);
   camera.aspect = w / h; camera.updateProjectionMatrix();
   composer.setPixelRatio(DPR); composer.setSize(w, h);
@@ -3638,10 +3642,32 @@ controls.update();
 renderClock();
 const clock = new THREE.Clock();
 let ready = false, nextStrike = 5;
-function frame() {
-  requestAnimationFrame(frame);
-  tick(Math.min(clock.getDelta(), 0.05));
+/* runtime safeguards: pause while hidden, stop on context loss, and step quality down if frames stay slow */
+let running = true, glLost = false, rafId = 0, slowT = 0, quality = 0, skipOdd = false, oddFrame = false;
+function lowerQuality() {
+  quality++;
+  if (quality === 1) { dprCap = 1; resize(); }                        /* 1: native-ish resolution */
+  else if (quality === 2) { bloom.enabled = false; }                  /* 2: no bloom */
+  else if (quality === 3) { skipOdd = true; }                         /* 3: render at half rate */
 }
+function frame() {
+  if (!running) { rafId = 0; return; }
+  rafId = requestAnimationFrame(frame);
+  if (skipOdd && (oddFrame = !oddFrame)) return;
+  const raw = clock.getDelta();
+  if (ready && quality < 3) { slowT = raw > (skipOdd ? 0.084 : 0.042) ? slowT + raw : Math.max(0, slowT - raw * 2); if (slowT > 3) { slowT = 0; lowerQuality(); } }
+  tick(Math.min(raw, 0.05));
+}
+function setRunning(on) {
+  on = on && !glLost && !document.hidden;
+  if (on === running) return;
+  running = on;
+  if (on) { clock.getDelta(); slowT = 0; if (!rafId) rafId = requestAnimationFrame(frame); }
+  if (sound.ctx) { if (on && sound.on) sound.ctx.resume(); else if (!on) sound.ctx.suspend(); }
+}
+document.addEventListener('visibilitychange', () => setRunning(!document.hidden));
+canvas.addEventListener('webglcontextlost', (e) => { e.preventDefault(); glLost = true; setRunning(false); $('#loading').classList.remove('done'); failLoad('glLost'); });
+canvas.addEventListener('webglcontextrestored', () => { glLost = false; window.__loadErr = null; $('#loading').classList.remove('err'); $('#loading').classList.add('done'); window.applyStatic(); setRunning(true); });
 function tick(dt) {
   checkSize();
   TT += dt;
