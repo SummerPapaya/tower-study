@@ -283,6 +283,12 @@ html[lang=en] .dock .row:not(.time){gap:10px}
     }
   };
   window.__lang = (function () {
+    /* ?lang= comes first: the SummerTown front door hands its own language
+       over, so the room opens in whatever the visitor was just reading. */
+    try {
+      var q = new URLSearchParams(location.search).get('lang');
+      if (q === 'zh' || q === 'en') return q;
+    } catch (e) {}
     try { var v = localStorage.getItem('tower-study-lang'); if (v === 'zh' || v === 'en') return v; } catch (e) {}
     return /^zh/i.test(navigator.language || '') ? 'zh' : 'en';
   })();
