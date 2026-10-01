@@ -43,6 +43,7 @@
 | 🪄 | 挥魔杖念咒语、看水晶球预言天气、让书本绕着房间飞 |
 | 🎶 | 打开留声机，听一支慢华尔兹（声音全部由 WebAudio 实时合成） |
 | 🔭 | 坐到桌前，望向窗外的云海 |
+| 🎩 | 打开页面时，先看见戴着**巫师帽尖顶**的塔楼浮在云海上，镜头再穿过屋顶推进书房（点一下即可跳过）；之后把镜头拉远，帽子会落回塔顶，拉近时又飘上天空 |
 | 🌐 | 右上角一键切换 **中文 / English** |
 
 ### 🏰 两层楼
@@ -207,6 +208,7 @@ tower-study/
 4. `<script type="importmap">`：把 `three` 和 `three/addons/` 映射到 `static/three-r160/`
 5. `<script type="module">`：场景本体
    - **两层楼**：`STUDY_L` / `BED_L` 描述每层的墙高、窗户和配色。`makeLevel()` 生成分段墙体，`buildWindow(w, L)` 生成窗户。书房整组是 `room`，卧室是 `lower`，卧室家具放在 `bedFurn` 里（只在楼下时绘制），塔身底座是 `base`
+   - **屋顶**：`roof` 是巫师帽尖顶（瓦片、两扇阁楼圆窗、帽尖的星星）。`updateRoof()` 按镜头远近让它落回塔顶或飘上天空，帽子戴着时墙不会切开。`startIntro()` 是打开页面时的开场镜头，点击、按键或滚轮会让它加速收尾，系统开启「减少动态效果」时不播放
    - **季节与天气**：`outdoor()` 材质补丁负责积雪和四季颜色，`seasonalMesh()` 让每个实例带上四季的颜色与大小，另有四季飘落粒子
    - **缩放**：`zoomBy()` / `stepZoom()` 自己处理滚轮和触控板。three.js r160 的 OrbitControls 按 `|delta| / (100 × 像素比)` 缩放，在 Retina 屏上，小幅触控板手势几乎推不动
    - **交互**：`interactive(root, { key, find, act })` 注册可点击的物件
@@ -257,6 +259,7 @@ Everything is drawn in a cel-shaded, storybook style. You can orbit and zoom fre
 | 🪄 | Flick the wand to cast a spell, ask the crystal orb for a forecast, send the books flying round the room |
 | 🎶 | Play a slow waltz on the gramophone (every sound is synthesised live with WebAudio) |
 | 🔭 | Sit down at the desk and gaze out over the clouds |
+| 🎩 | The page opens on the tower in its **witch's-hat roof**, floating on the clouds, then the camera pushes in through the roof and down into the study (click to skip). Zoom out later and the hat settles back on; zoom in and it floats off again |
 | 🌐 | Switch between **中文 / English** with the button in the top-right corner |
 
 ### 🏰 Two floors
@@ -421,6 +424,7 @@ tower-study/
 4. `<script type="importmap">`: maps `three` and `three/addons/` to `static/three-r160/`
 5. `<script type="module">`: the scene itself
    - **Two floors**: `STUDY_L` / `BED_L` describe each floor's wall height, windows and colours. `makeLevel()` builds the segmented walls and `buildWindow(w, L)` builds the windows. The study group is `room`, the bedroom is `lower`, the bedroom furniture sits in `bedFurn` (drawn only while you are downstairs), and the tower base is `base`
+   - **Roof**: `roof` is the witch's-hat roof (slates, two round attic windows and the star on the tip). `updateRoof()` lowers it onto the tower when the camera is far out and floats it off as you come in; while it is on, the walls stay whole. `startIntro()` is the opening shot; a click, key or scroll hurries it along, and it is skipped when the system asks for reduced motion
    - **Seasons and weather**: the `outdoor()` material patch handles snow cover and seasonal colours, `seasonalMesh()` gives every instance its own colour and size per season, and there are falling particles for each season
    - **Zoom**: `zoomBy()` / `stepZoom()` handle the wheel and trackpad directly. three.js r160's OrbitControls zooms by `|delta| / (100 × pixel ratio)`, so small trackpad gestures barely move on a Retina screen
    - **Interaction**: `interactive(root, { key, find, act })` registers a clickable object

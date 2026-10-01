@@ -57,6 +57,9 @@ body{margin:0;background:var(--night);color:var(--cream);font:14px/1.5 "Noto Ser
 #c.paw{cursor:var(--cur-paw,pointer)}
 html{cursor:var(--cur,auto)}
 #trail{position:fixed;inset:0;width:100%;height:100%;pointer-events:none;z-index:3}
+body:not(.intro) .hud{transition:opacity .9s ease}   /* fades in when the opening shot lands, never out */
+body.intro .hud{opacity:0}
+body.intro .hud *{pointer-events:none!important}
 .hud{position:fixed;inset:0;pointer-events:none;display:grid;grid-template-rows:auto 1fr auto;gap:12px;padding:calc(env(safe-area-inset-top,0px) + 16px) 16px calc(env(safe-area-inset-bottom,0px) + 16px)}
 /* parchment card with a double ink border */
 .card{position:relative;color:var(--ink);background:var(--paper-grain),radial-gradient(130% 150% at 50% 35%,#f8efdc 0%,#f2e5c9 62%,#e5d2ab 100%);border:1px solid rgba(58,42,31,.6);border-radius:10px;box-shadow:inset 0 0 0 3px rgba(248,239,220,.9),inset 0 0 0 4px rgba(58,42,31,.3),0 10px 24px rgba(18,10,4,.3)}
@@ -1631,7 +1634,7 @@ wand.g.position.set(0.63, TOPY + 0.0085, 0.17); wand.g.rotation.y = 1.15; desk.a
 const cat = (() => {
   const root = new THREE.Group();
   const fur = toon('#2b2731'), furLite = toon('#3e3947'), pink = toon('#e79aa8'), dark = toon('#0f0d12');
-  const eyeMat = new THREE.MeshBasicMaterial({ color: new THREE.Color(1.25, 1.0, 0.3) });
+  const eyeMat = new THREE.MeshBasicMaterial({ color: new THREE.Color(1.25, 0.62, 0.14) }), pupilMat = new THREE.MeshBasicMaterial({ color: '#0c0a0e' }), glintMat = new THREE.MeshBasicMaterial({ color: new THREE.Color(1.6, 1.6, 1.6) });
   const P = { legs: [], eyes: [], lids: [], haunch: [], tail: [] };
   P.body = grp(root);
   M(P.body, sphG(0.1, 22, 16), fur, 0, 0, 0, { s: [1.15, 1.05, 2.0] });
@@ -1640,13 +1643,17 @@ const cat = (() => {
   M(P.head, sphG(0.04, 12, 8), furLite, 0, -0.028, 0.058, { s: [1.35, 0.75, 1] });
   M(P.head, sphG(0.009, 8, 6), pink, 0, -0.008, 0.097, { cast: false });
   for (const s of [-1, 1]) {
-    const ear = grp(P.head, s * 0.05, 0.062, -0.01); ear.rotation.z = -s * 0.32;
-    M(ear, coneG(0.036, 0.075, 4), fur, 0, 0.032, 0, { ry: Math.PI / 4 });
-    M(ear, coneG(0.021, 0.048, 4), pink, 0, 0.026, 0.013, { ry: Math.PI / 4, cast: false });
-    const e = M(P.head, sphG(0.017, 12, 8), eyeMat, s * 0.036, 0.012, 0.07, { s: [1, 1, 0.55], cast: false, recv: false, layer: L_FX });
-    const pu = M(P.head, BOX, dark, s * 0.036, 0.012, 0.0795, { cast: false, layer: L_FX }); pu.scale.set(0.005, 0.024, 0.004);
-    e.userData.sy0 = 1; pu.userData.sy0 = 0.024; P.eyes.push(e, pu);
-    const lid = M(P.head, BOX, dark, s * 0.036, 0.008, 0.078, { rz: s * 0.25, cast: false }); lid.scale.set(0.03, 0.004, 0.006); P.lids.push(lid);
+    const ear = grp(P.head, s * 0.052, 0.063, -0.01); ear.rotation.z = -s * 0.32;
+    M(ear, coneG(0.044, 0.092, 4), fur, 0, 0.04, 0, { ry: Math.PI / 4 });
+    M(ear, coneG(0.026, 0.06, 4), pink, 0, 0.033, 0.016, { ry: Math.PI / 4, cast: false });
+    /* big round amber eyes with round pupils and a catchlight */
+    const ex = s * 0.038, ey = 0.014;
+    const e = M(P.head, sphG(0.022, 16, 12), eyeMat, ex, ey, 0.068, { s: [1, 1, 0.55], cast: false, recv: false, layer: L_FX });
+    const px = ex + s * 0.004;   /* the head curves away at the sides, so centre the pupil on what shows of the eye */
+    const pu = M(P.head, sphG(0.0135, 14, 10), pupilMat, px, ey - 0.001, 0.0785, { s: [1, 1, 0.3], cast: false, recv: false, layer: L_FX });
+    const gl = M(P.head, sphG(0.0042, 8, 6), glintMat, px + 0.005, ey + 0.0065, 0.0828, { s: [1, 1, 0.4], cast: false, recv: false, layer: L_FX });
+    for (const o of [e, pu, gl]) { o.userData.sy0 = o.scale.y; P.eyes.push(o); }
+    const lid = M(P.head, BOX, dark, ex, ey - 0.004, 0.08, { rz: s * 0.2, cast: false }); lid.scale.set(0.04, 0.0045, 0.006); P.lids.push(lid);
     for (const k of [0, 1]) { const wsk = M(P.head, BOX, toon('#d8d2de'), s * 0.075, -0.022 - k * 0.012, 0.06, { ry: -s * 0.25, rz: s * (0.08 - k * 0.16), cast: false }); wsk.scale.set(0.075, 0.0016, 0.0016); }
   }
   M(P.head, torG(0.058, 0.011, 6, 24), '#c2454f', 0, -0.062, -0.005, { rx: Math.PI / 2 - 0.3 });
@@ -2895,13 +2902,14 @@ function checkSize() {
   if (w === lastW && h === lastH) return;
   const first = lastW <= 1 || lastH <= 1;
   lastW = w; lastH = h; resize();
-  if (!touched && !tween && (state.view === 'orbit' || state.view === 'bed') && !first) camera.position.copy(state.view === 'bed' ? orbitPos(BED_T, BED_OFF) : orbitPos());
+  if (!touched && !tween && !intro && (state.view === 'orbit' || state.view === 'bed') && !first) camera.position.copy(state.view === 'bed' ? orbitPos(BED_T, BED_OFF) : orbitPos());
 }
 function resize() {
   const w = lastW || Math.max(1, innerWidth), h = lastH || Math.max(1, innerHeight);
   DPR = dprFor(w, h); renderer.setPixelRatio(DPR);
   renderer.setSize(w, h, false);
   camera.aspect = w / h; camera.updateProjectionMatrix();
+  if (state.view !== 'sit') controls.maxDistance = orbitMax();
   composer.setPixelRatio(DPR); composer.setSize(w, h);
   renderer.getDrawingBufferSize(dbs);
   pointScale.value = dbs.y / (2 * Math.tan(camera.fov * D / 2));
@@ -3021,6 +3029,123 @@ function flashValue() {
   return 0.8 * Math.exp(-(t - 0.24) * 7);
 }
 
+/* ───────────── the roof: a witch's hat with a star on its tip ───────────── */
+/* from afar the tower wears its hat; come in close and it floats up into the sky so you can look inside */
+const roof = new THREE.Group(); scene.add(roof);
+const roofS = { on: false, k: 1, fast: false };      /* k: 0 = sitting on the tower, 1 = floated away; fast when the opening shot is hurried */
+const ROOF_Y = H + 0.05, ROOF_UP = 34;
+const hrng = mulberry32(8128), hrr = (a, b) => a + (b - a) * hrng();   /* its own random stream, so the rest of the scene keeps its layout */
+const hat = (() => {
+  /* the spine rises straight, then leans over and curls to one side; rings stay square to it */
+  const spine = new THREE.CatmullRomCurve3([[0, 0], [0, 1.8], [0.1, 3.2], [0.45, 4.5], [1.1, 5.6], [1.95, 6.3], [2.55, 6.55]].map(([d, y]) => new THREE.Vector3(-d, y, 0)));
+  const L = spine.getLength();
+  /* radius along the spine: a wide flared brim that pinches in fast, then a long thin point */
+  const RS = [[0, 5.32], [0.03, 4.9], [0.08, 4.1], [0.16, 3.2], [0.26, 2.4], [0.38, 1.7], [0.5, 1.2], [0.62, 0.82], [0.74, 0.52], [0.86, 0.28], [1, 0]];
+  const NT = 400, tab = new Float32Array(NT + 1);
+  for (let i = 0; i <= NT; i++) { const s = i / NT, j = RS.findIndex((p) => p[0] >= s); tab[i] = j <= 0 ? RS[0][1] : lerp(RS[j - 1][1], RS[j][1], (s - RS[j - 1][0]) / (RS[j][0] - RS[j - 1][0])); }
+  for (let pass = 0; pass < 4; pass++) { const c = tab.slice(); for (let i = 4; i < NT - 4; i++) { let a = 0; for (let k = -4; k <= 4; k++) a += c[i + k]; tab[i] = a / 9; } }
+  const rAt = (s) => { const x = clamp(s, 0, 1) * NT, i = Math.min(NT - 1, Math.floor(x)); return lerp(tab[i], tab[i + 1], x - i); };
+  const drdl = (s) => (rAt(s + 0.002) - rAt(s - 0.002)) / (0.004 * L);
+  const Bz = new THREE.Vector3(0, 0, 1);
+  /* surface frame at spine position s and angle u (u = 0 faces the big window, as in Pc) */
+  function frame(s, u) {
+    const P = spine.getPointAt(s), T = spine.getTangentAt(s), N = new THREE.Vector3().crossVectors(T, Bz).normalize();
+    const rad = N.clone().multiplyScalar(Math.sin(u)).addScaledVector(Bz, -Math.cos(u)), r = rAt(s), k = drdl(s);
+    return { p: P.addScaledVector(rad, r), n: rad.clone().addScaledVector(T, -k).normalize(), up: T.clone().addScaledVector(rad, k).normalize(), r };
+  }
+  const NS = 84, NU = 72, pos = [], nrm = [], uv = [], idx = [];
+  for (let i = 0; i <= NS; i++) for (let j = 0; j <= NU; j++) {
+    const f = frame(i / NS, j / NU * TAU);
+    pos.push(f.p.x, f.p.y, f.p.z); nrm.push(f.n.x, f.n.y, f.n.z); uv.push(j / NU, i / NS);
+  }
+  for (let i = 0; i < NS; i++) for (let j = 0; j < NU; j++) { const a = i * (NU + 1) + j, b = a + NU + 1; idx.push(a, a + 1, b, a + 1, b + 1, b); }
+  const geo = new THREE.BufferGeometry();
+  geo.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3)); geo.setAttribute('normal', new THREE.Float32BufferAttribute(nrm, 3)); geo.setAttribute('uv', new THREE.Float32BufferAttribute(uv, 2));
+  geo.setIndex(idx); geo.computeBoundingSphere();
+  return { geo, frame, rAt, L, spine, R0: RS[0][1] };
+})();
+const hatMat = outToon('#2f3672');
+const hatBody = M(roof, hat.geo, hatMat, 0, 0, 0, { recv: false });
+const hatUnder = M(roof, new THREE.CircleGeometry(hat.R0, 96).rotateX(Math.PI / 2), '#2a2550', 0, 0.004, 0, { cast: false });
+M(roof, new THREE.TorusGeometry(hat.R0 - 0.02, 0.075, 8, 120).rotateX(Math.PI / 2), '#d9ae57', 0, 0.02, 0, { cast: false });
+/* round attic windows, one above the big window and one at the front, lit at night like the others */
+const HAT_WINS = [hat.frame(2.25 / hat.L, 0), hat.frame(2.25 / hat.L, Math.PI)];
+for (const f of HAT_WINS) {
+  const g = new THREE.Group(), x = new THREE.Vector3().crossVectors(f.up, f.n);
+  g.matrix.makeBasis(x, f.up, f.n).setPosition(f.p.clone().addScaledVector(f.n, 0.1)); g.matrixAutoUpdate = false; roof.add(g);
+  M(g, torG(0.42, 0.09, 10, 32), '#4b2f1f', 0, 0, 0, { cast: false });
+  M(g, new THREE.CircleGeometry(0.42, 32), winLitMat, 0, 0, -0.02, { cast: false });
+  B(g, 0.84, 0.06, 0.06, '#4b2f1f', 0, -0.03, 0, { cast: false }); B(g, 0.06, 0.84, 0.06, '#4b2f1f', 0, -0.42, 0, { cast: false });
+}
+/* scalloped slates, laid in rows from the brim up, each row a half-slate offset and tucked under the one above */
+{
+  const sh = new THREE.Shape(); sh.moveTo(-0.5, 0.5); sh.lineTo(-0.5, 0); sh.absarc(0, 0, 0.5, Math.PI, TAU, false); sh.lineTo(0.5, 0.5); sh.closePath();
+  const SLATE = new THREE.ExtrudeGeometry(sh, { depth: 0.06, bevelEnabled: false, curveSegments: 6 });
+  const slates = [], SLATE_C = ['#4a549e', '#46509a', '#4f59a4', '#434c93'].map(col), ROW = 0.3, tilt = new THREE.Quaternion(), mtx = new THREE.Matrix4();
+  for (let row = 0, l = 0.28; l < hat.L * 0.86; row++, l += ROW) {
+    const s = l / hat.L, r = hat.rAt(s); if (r < 0.3) break;
+    const n = Math.max(5, Math.round(TAU * r / 0.6)), w = TAU * r / n * 1.12, h = ROW * (2.2 + 1.2 * Math.max(0, 1 - l / 1.4));   /* longer slates where the brim flares */
+    for (let i = 0; i < n; i++) {
+      const u = (i + (row % 2) * 0.5 + hrr(-0.06, 0.06)) / n * TAU, f = hat.frame(s, u);
+      if (HAT_WINS.some((w) => f.p.distanceTo(w.p) < 0.62)) continue;
+      const x = new THREE.Vector3().crossVectors(f.up, f.n);
+      mtx.makeBasis(x, f.up, f.n); const q = new THREE.Quaternion().setFromRotationMatrix(mtx);
+      q.multiply(tilt.setFromAxisAngle(new THREE.Vector3(1, 0, 0), -Math.atan2(0.07, h)));
+      slates.push({ p: f.p.addScaledVector(f.n, 0.03), q, s: new THREE.Vector3(w, h, 1), c: SLATE_C[Math.floor(hrng() * SLATE_C.length)] });
+    }
+  }
+  const im = new THREE.InstancedMesh(SLATE, outToon('#ffffff'), slates.length);
+  slates.forEach((it, i) => { im.setMatrixAt(i, mtx.compose(it.p, it.q, it.s)); im.setColorAt(i, it.c); });
+  im.receiveShadow = true; im.frustumCulled = false; roof.add(im);
+}
+/* icicles along the brim in winter */
+{
+  const ICE_G = new THREE.ConeGeometry(1, 1, 5).rotateX(Math.PI).translate(0, -0.5, 0), ice = [];
+  const ICE_C = [0, 1, 2, 3].map(() => new THREE.Color(1, 1, 1)), ICE_K = [0, 0, 0, 1];
+  for (let k = 0; k < 120; k++) { const u = (k + hrr(0, 0.7)) / 120 * TAU, len = hrr(0.1, 0.5), r = hrr(0.02, 0.035); ice.push({ p: new THREE.Vector3(...Pc(u, hat.R0 - 0.06, -0.02)), q: new THREE.Quaternion(), s: new THREE.Vector3(r, len, r), c: ICE_C, k: ICE_K }); }
+  roof.add(seasonalMesh(ICE_G, outToon('#d6ebf8', { OUT_SEASONAL: '', OUT_ICE: '' }), ice, L_FX));
+}
+/* the star on the tip, like the one in the picture on the README */
+const hatStar = (() => {
+  const star4 = (r, inner) => { const sh = new THREE.Shape(); for (let i = 0; i < 8; i++) { const k = i % 2 ? r * inner : r, a = Math.PI / 2 + i * Math.PI / 4; if (i) sh.lineTo(Math.cos(a) * k, Math.sin(a) * k); else sh.moveTo(Math.cos(a) * k, Math.sin(a) * k); } sh.closePath(); return sh; };
+  const ex = { depth: 0.06, bevelEnabled: true, bevelThickness: 0.02, bevelSize: 0.02, bevelSegments: 1 };
+  const big = new THREE.ExtrudeGeometry(star4(0.62, 0.22), ex).translate(0, 0, -0.05), small = new THREE.ExtrudeGeometry(star4(0.38, 0.3), ex).rotateZ(Math.PI / 4).translate(0, 0, 0.02);
+  const mat = new THREE.MeshBasicMaterial({ color: new THREE.Color(2.4, 1.9, 0.9), fog: false }), mat2 = new THREE.MeshBasicMaterial({ color: new THREE.Color(2.8, 2.5, 1.7), fog: false });
+  const g = new THREE.Group(), end = hat.spine.getPointAt(1), tip = end.addScaledVector(hat.spine.getTangentAt(1), 0.5);
+  g.position.copy(tip); roof.add(g);
+  for (const ry of [0, Math.PI / 2]) { const m = new THREE.Mesh(big, mat), m2 = new THREE.Mesh(small, mat2); m.rotation.y = m2.rotation.y = ry; m.layers.set(L_FX); m2.layers.set(L_FX); g.add(m, m2); }
+  const halo = new THREE.Sprite(new THREE.SpriteMaterial({ map: glowTex, transparent: true, depthWrite: false, blending: THREE.AdditiveBlending, opacity: 0.4, fog: false }));
+  halo.scale.setScalar(3.2); halo.layers.set(L_FX); g.add(halo);
+  return { g, mat, mat2, halo, y: tip.y };
+})();
+/* the hat comes down when the camera is well back from the study, and floats off as it comes in */
+function roofWanted() {
+  if (intro) return !intro.skip && intro.t < INTRO_LIFT;
+  if (state.floor !== 'study' || state.liftK > 0.001 || state.view === 'sit') return false;
+  const home = ORBIT_OFF.length() * homeDist(), d = camera.position.distanceTo(controls.target);
+  return d > home * (roofS.on ? 1.3 : 1.45);
+}
+function updateRoof(dt, t) {
+  roofS.on = roofWanted();
+  const to = roofS.on ? 0 : 1;
+  if (roofS.k !== to) {
+    const step = reduceMotion ? 1 : dt / (roofS.fast ? 0.45 : intro ? 0.9 : 1.7);
+    roofS.k = to > roofS.k ? Math.min(1, roofS.k + step) : Math.max(0, roofS.k - step);
+    if (roofS.k === 1) roofS.fast = false;
+    if (roofS.k > 0.01 && roofS.k < 0.97) for (let i = 0; i < 2; i++) { const a = Math.random() * TAU; sparks.emitOne(Math.sin(a) * hat.R0, roof.position.y, -Math.cos(a) * hat.R0, 0, -0.4, 0, GOLD[i % 3], 0.1, 1.3, -0.2, 0, 0.12); }
+  }
+  const e = ease(roofS.k);
+  roof.position.y = room.position.y + ROOF_Y + e * ROOF_UP;
+  roof.rotation.y = e * 0.8;
+  roof.visible = roofS.k < 0.995;
+  if (!roof.visible) return;
+  const tw = 0.85 + 0.15 * Math.sin(t * 3.1), glow = (0.6 + 0.6 * ENV.fair) * tw;
+  hatStar.g.rotation.y = t * 0.9; hatStar.g.position.y = hatStar.y + Math.sin(t * 1.6) * 0.06;
+  hatStar.mat.color.setRGB(2.4 * glow, 1.9 * glow, 0.9 * glow); hatStar.mat2.color.setRGB(2.8 * glow, 2.5 * glow, 1.7 * glow);
+  hatStar.halo.material.opacity = (0.2 + 0.5 * ENV.fair) * tw;
+  if (roofS.k < 0.05 && Math.random() < dt * (0.6 + 1.6 * ENV.fair)) sparks.emit(hatStar.g.getWorldPosition(new THREE.Vector3()), 1, { colors: GOLD, size: 0.09, life: 1.4, speed: 0.35, gravity: 0.15 });
+}
+
 /* ───────────── camera views & cutaway ───────────── */
 const homeDist = () => { const a = Math.max(1, lastW || innerWidth) / Math.max(1, lastH || innerHeight); return a < 1.1 ? clamp(1.28 / a, 1, 2.1) : 1; };
 const ORBIT_T = new THREE.Vector3(0, 1.0, -0.6);
@@ -3028,9 +3153,11 @@ const ORBIT_T = new THREE.Vector3(0, 1.0, -0.6);
 const ORBIT_OFF = new THREE.Vector3(1.2, 10.0, 9.4), BED_T = new THREE.Vector3(0, ORBIT_T.y - FLOOR2, 0.75), BED_OFF = new THREE.Vector3(1.2, 10.8, 8.8).multiplyScalar(1.12);
 const orbitPos = (t = ORBIT_T, off = ORBIT_OFF) => t.clone().add(off.clone().multiplyScalar(homeDist()));
 const SIT_EYE = new THREE.Vector3(0, 1.24, -0.62), SIT_LOOK = new THREE.Vector3(0, 1.95, -4.2);
+/* far enough back to see the whole tower in its hat */
+const orbitMax = () => Math.max(48, ORBIT_OFF.length() * homeDist() * 1.9);
 function applyControls(mode) {
   if (mode === 'sit') { controls.minDistance = 0.03; controls.maxDistance = 0.08; controls.enableZoom = false; controls.enablePan = false; controls.rotateSpeed = -0.32; controls.minPolarAngle = 0.55; controls.maxPolarAngle = 2.55; }
-  else { controls.minDistance = 4.5; controls.maxDistance = 30; controls.enableZoom = true; controls.enablePan = true; controls.rotateSpeed = 0.55; controls.minPolarAngle = 0.12; controls.maxPolarAngle = 1.42; }
+  else { controls.minDistance = 4.5; controls.maxDistance = orbitMax(); controls.enableZoom = true; controls.enablePan = true; controls.rotateSpeed = 0.55; controls.minPolarAngle = 0.12; controls.maxPolarAngle = 1.42; }
 }
 let tween = null;
 function flyTo(pos, tgt, dur, done) { tween = { p0: camera.position.clone(), t0: controls.target.clone(), p1: pos.clone(), t1: tgt.clone(), k: 0, dur: reduceMotion ? 0.01 : dur, done }; controls.enabled = false; }
@@ -3042,7 +3169,50 @@ function stepTween(dt) {
   camera.lookAt(controls.target);
   if (tween.k >= 1) { const d = tween.done; tween = null; controls.enabled = true; if (d) d(); controls.update(); }
 }
+/* the opening shot, like the trailer: the tower in its hat floating on the cloud sea, a slow drift, then a push in through
+   the roof (the hat floats off) and down into the study. The HUD waits until it lands; any click, key or scroll hurries it along */
+let intro = null;
+const INTRO_LIFT = 3.4;                              /* when the hat floats off, in seconds of the shot */
+function startIntro() {
+  const off = orbitPos().sub(ORBIT_T), home = off.length();
+  const far = Math.max(64, 11 / (Math.tan(17 * D) * camera.aspect));   /* narrow phone screens need to stand further back */
+  /* keys: time, azimuth (from +z), elevation, log distance, target */
+  const K = [
+    [0, 24 * D, 3.5 * D, far, 0, 6.5, 0],
+    [2.6, 18 * D, 6 * D, far * 0.75, 0, 6.5, 0],
+    [4.3, 12 * D, 22 * D, Math.max(26, home * 1.35), 0, 4.5, -0.3],
+    [6.2, Math.atan2(off.x, off.z), Math.asin(off.y / home), home, ORBIT_T.x, ORBIT_T.y, ORBIT_T.z],
+  ];
+  for (const k of K) k[3] = Math.log(k[3]);
+  intro = { t: 0, speed: 1, skip: false, K, T: K[K.length - 1][0] };
+  controls.enabled = false; roofS.on = true; roofS.k = 0;
+  document.body.classList.add('intro');
+  stepIntro(0);
+}
+function endIntro() { intro = null; document.body.classList.remove('intro'); }
+function skipIntro() { if (!intro || intro.skip) return; intro.skip = true; intro.speed = Math.max(1, (intro.T - intro.t) / 0.8); roofS.fast = roofS.k < 1; document.body.classList.remove('intro'); }
+/* cubic Hermite through the keys: it drifts in slowly, speeds up, and settles with no jolt */
+function introAt(K, t) {
+  const n = K.length - 1; let i = 0;
+  while (i < n - 1 && t > K[i + 1][0]) i++;
+  const t0 = K[i][0], h = K[i + 1][0] - t0, x = clamp((t - t0) / h, 0, 1), x2 = x * x, x3 = x2 * x;
+  const slope = (j, c) => j === 0 ? 0.6 * (K[1][c] - K[0][c]) / K[1][0] : j === n ? 0 : (K[j + 1][c] - K[j - 1][c]) / (K[j + 1][0] - K[j - 1][0]);
+  const out = [];
+  for (let c = 1; c < 7; c++) out.push((2 * x3 - 3 * x2 + 1) * K[i][c] + (x3 - 2 * x2 + x) * h * slope(i, c) + (3 * x2 - 2 * x3) * K[i + 1][c] + (x3 - x2) * h * slope(i + 1, c));
+  return out;
+}
+function stepIntro(dt) {
+  const it = intro;
+  it.t = Math.min(it.T, it.t + dt * it.speed);
+  const [az, el, lr, tx, ty, tz] = introAt(it.K, it.t), r = Math.exp(lr);
+  controls.target.set(tx, ty, tz);
+  camera.position.set(Math.sin(az) * Math.cos(el) * r, Math.sin(el) * r, Math.cos(az) * Math.cos(el) * r).add(controls.target);
+  camera.lookAt(controls.target);
+  if (it.t >= it.T) { endIntro(); controls.enabled = true; controls.update(); }
+}
+for (const ev of ['pointerdown', 'keydown']) addEventListener(ev, skipIntro, { passive: true });
 function setView(v) {
+  if (intro) endIntro();
   /* the desk and the bedroom are two floors apart: go via the study overview */
   if ((v === 'sit' && state.floor === 'bed') || (v === 'bed' && state.view === 'sit')) { setView('orbit'); tween.done = () => setView(v); return; }
   const from = state.floor;
@@ -3064,6 +3234,7 @@ function setView(v) {
    or at the desk the field of view (OrbitControls' own wheel zoom barely moves for small trackpad deltas) */
 const zoom = { goal: null, fov: 34 }, zv = new THREE.Vector3();
 function zoomBy(f) {
+  if (intro) { skipIntro(); return; }
   if (tween) return;
   if (state.view === 'sit') { zoom.fov = clamp(zoom.fov * f, 14, 46); return; }
   zoom.goal = clamp((zoom.goal ?? camera.position.distanceTo(controls.target)) * f, controls.minDistance, controls.maxDistance);
@@ -3082,7 +3253,7 @@ function updateCutaway(dt) {
   const nx = dc > 1e-4 ? cx / dc : 0, nz = dc > 1e-4 ? cz / dc : 1;
   for (const s of sections) {
     const dot = Math.sin(s.mid) * nx + (-Math.cos(s.mid)) * nz;
-    const target = inside ? 0 : (dot > 0.12 ? 1 : 0);
+    const target = inside || roofS.on ? 0 : (dot > 0.12 ? 1 : 0);
     s.drop = damp(s.drop, target, 6, dt);
     s.group.position.y = -s.drop * (H - STUB);
   }
@@ -3336,6 +3507,7 @@ for (const [plant, [root, dy]] of [[benchRoot, 0.95], [bigPot, 0.8], [bluePot, 0
 }
 const pickables = [];
 for (const lvl of [room, lower]) lvl.traverse((o) => { if (o.isMesh && (o.layers.mask & ((1 << L_MAIN) | (1 << L_SOFT))) && !o.layers.test({ mask: 1 << L_SHADOW })) pickables.push(o); });
+pickables.push(hatBody, hatUnder);
 const ceilingSet = new Set(); ceiling.traverse((o) => ceilingSet.add(o));
 const raycaster = new THREE.Raycaster(); raycaster.layers.set(L_MAIN); raycaster.layers.enable(L_SOFT);
 const ndc = new THREE.Vector2(), FLOOR_PLANE = new THREE.Plane(new THREE.Vector3(0, 1, 0), 0), floorHit = new THREE.Vector3();
@@ -3368,7 +3540,7 @@ canvas.addEventListener('pointerdown', (e) => { downAt = { x: e.clientX, y: e.cl
 canvas.addEventListener('pointerup', (e) => {
   if (!downAt) return;
   const moved = Math.hypot(e.clientX - downAt.x, e.clientY - downAt.y), dtp = performance.now() - downAt.t; downAt = null;
-  if (moved > 7 || dtp > 600 || tween) return;
+  if (moved > 7 || dtp > 600 || tween || intro) return;
   ndc.set(e.clientX / innerWidth * 2 - 1, -(e.clientY / innerHeight) * 2 + 1);
   const def = pickAt();
   const wasAwake = catS.mode !== 'sleep';
@@ -3645,6 +3817,7 @@ controls.addEventListener('start', () => { touched = true; });
 camera.position.copy(orbitPos());
 controls.target.copy(ORBIT_T);
 controls.update();
+if (!reduceMotion) startIntro();
 renderClock();
 const clock = new THREE.Clock();
 let ready = false, nextStrike = 5;
@@ -3692,6 +3865,7 @@ function tick(dt) {
     if (state.liftK > 0.02 && state.liftK < 0.98) for (let i = 0; i < 3; i++) { const a = Math.random() * TAU; sparks.emitOne(Math.sin(a) * (R2 + 0.15), room.position.y - 0.35, -Math.cos(a) * (R2 + 0.15), 0, -0.3, 0, pick(GOLD), 0.07, 1.3, -0.25, 0, 0.12); }
   }
   bedFurn.visible = state.liftK > 0.001;
+  updateRoof(dt, TT);
   state.flashT += dt;
   if (W.storm > 0.6) { nextStrike -= dt; if (nextStrike <= 0) { strike(); nextStrike = rr(5, 12); } }
   if (bolt) bolt.visible = state.flashT < 0.3 && (state.flashT < 0.08 || state.flashT > 0.15);
@@ -3701,13 +3875,14 @@ function tick(dt) {
   glassU.uTime.value = TT; rainU.uTime.value = TT; snowU.uTime.value = TT; dustU.uTime.value = TT; skyU.uTime.value = TT; driftU.uTime.value = TT;
   sparks.update(dt, TT); softs.update(dt, TT); petals.update(dt, TT);
   sound.update(dt);
-  if (tween) stepTween(dt);
+  if (intro) stepIntro(dt);
+  else if (tween) stepTween(dt);
   else {
     stepZoom(dt);
     controls.update();
     if (state.view === 'orbit' || state.view === 'bed') { const tg = controls.target, r = Math.hypot(tg.x, tg.z), fy = state.view === 'bed' ? -FLOOR2 : 0; if (r > 3) { tg.x *= 3 / r; tg.z *= 3 / r; } tg.y = clamp(tg.y, 0.2 + fy, 3.5 + fy); }
   }
-  if (pointerDirty && pointerIn && !tween) {
+  if (pointerDirty && pointerIn && !tween && !intro) {
     pointerDirty = false; setHover(pickAt()); if (hovered) placeTip(lastX, lastY);
     if (catS.mode !== 'sleep' && state.floor === 'study' && raycaster.ray.intersectPlane(FLOOR_PLANE, floorHit)) { catS.lookAt.copy(floorHit).setY(0.18); catS.lookValid = true; }
   }
